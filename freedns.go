@@ -65,7 +65,7 @@ func (ctx *FreeDNS) ConfigEnv() error {
 	return nil
 }
 
-func (ctx *FreeDNS) authenticate() (string, error) {
+func (ctx *FreeDNS) Authenticate() (string, error) {
 	if ctx.Auth.Login == "" || ctx.Auth.Password == "" {
 		return "", errors.New("Auth not found in configuration")
 	}
@@ -97,9 +97,6 @@ func NewFreeDNS() (*FreeDNS, error) {
 			DeleteRecord: "/subdomain/delete2.php?data_id%5B%5D={RECORD_ID}&submit=delete+selected",
 		},
 		Auth: ConfigAuth{
-			// Login: "email",
-			// Password: "secret",
-			// CookieValue: "dns_cookie",
 			CookieName: "dns_cookie",
 		},
 	}
@@ -119,12 +116,12 @@ func NewFreeDNS() (*FreeDNS, error) {
 		Jar: jar,
 	}
 
-	_, err = ctx.authenticate()
+	_, err = ctx.Authenticate()
 
 	return ctx, err
 }
 
-func (ctx *FreeDNS) getDomains() (map[string]string, error) {
+func (ctx *FreeDNS) GetDomains() (map[string]string, error) {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + ctx.Urls.GetDomains)
 	if err != nil {
 		fmt.Printf("Error getting domains: %s", err.Error())
@@ -163,7 +160,7 @@ func (ctx *FreeDNS) getDomains() (map[string]string, error) {
 	return m, err
 }
 
-func (ctx *FreeDNS) createDomain(domain string) error {
+func (ctx *FreeDNS) CreateDomain(domain string) error {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + strings.Replace(ctx.Urls.CreateDomain, "{DOMAIN}", domain, -1))
 	if err != nil {
 		fmt.Printf("Error creating domain %s: %s", domain, err.Error())
@@ -187,7 +184,7 @@ func (ctx *FreeDNS) createDomain(domain string) error {
 	return err
 }
 
-func (ctx *FreeDNS) deleteDomain(domain_id string) error {
+func (ctx *FreeDNS) DeleteDomain(domain_id string) error {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + strings.Replace(ctx.Urls.DeleteDomain, "{DOMAIN_ID}", domain_id, -1))
 	if err != nil {
 		fmt.Printf("Error deleting domain ID %s: %s", domain_id, err.Error())
@@ -218,7 +215,7 @@ type Record struct {
 	Value string
 }
 
-func (ctx *FreeDNS) getRecords(domain_id string) (map[string]Record, error) {
+func (ctx *FreeDNS) GetRecords(domain_id string) (map[string]Record, error) {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + strings.Replace(ctx.Urls.GetRecords, "{DOMAIN_ID}", domain_id, -1))
 	if err != nil {
 		fmt.Printf("Error getting records for domain %s: %s", domain_id, err.Error())
@@ -260,7 +257,7 @@ func (ctx *FreeDNS) getRecords(domain_id string) (map[string]Record, error) {
 	return m, err
 }
 
-func (ctx *FreeDNS) updateRecord(domain_id string, record_id string, name string, t string, value string, ttl string) error {
+func (ctx *FreeDNS) UpdateRecord(domain_id string, record_id string, name string, t string, value string, ttl string) error {
 	formData := url.Values{
 		"domain_id": []string{domain_id},
 		"subdomain": []string{name},
@@ -295,11 +292,11 @@ func (ctx *FreeDNS) updateRecord(domain_id string, record_id string, name string
 	return err
 }
 
-func (ctx *FreeDNS) createRecord(domain_id string, name string, t string, value string, ttl string) error {
-	return ctx.updateRecord(domain_id, "", name, t, value, ttl)
+func (ctx *FreeDNS) CreateRecord(domain_id string, name string, t string, value string, ttl string) error {
+	return ctx.UpdateRecord(domain_id, "", name, t, value, ttl)
 }
 
-func findRecordIds(m map[string]Record, name string) (ids []string, ok bool) {
+func (ctx *FreeDNS) FindRecordIds(m map[string]Record, name string) (ids []string, ok bool) {
 	ok = false
 	for k, v := range m {
 		if v.Name == name {
@@ -311,7 +308,7 @@ func findRecordIds(m map[string]Record, name string) (ids []string, ok bool) {
 	return ids, ok
 }
 
-func (ctx *FreeDNS) deleteRecord(record_id string) error {
+func (ctx *FreeDNS) DeleteRecord(record_id string) error {
 	formData := url.Values{
 		"data_id": []string{record_id},
 	}
