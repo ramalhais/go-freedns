@@ -1,0 +1,11 @@
+urls:
+  base:         "https://freedns.afraid.org"
+  login:        "/zc.php?step=2"
+  getdomains:   "/domain/"
+  createdomain: "/domain/domaincheck.php?domain={DOMAIN}"
+  deletedomain: "/domain/delete.php?domain_id={DOMAIN_ID}"
+  getrecords:   "/subdomain/?limit={DOMAIN_ID}"
+  updaterecord: "/subdomain/save.php?step=2"
+  deleterecord: "/subdomain/delete2.php?data_id%5B%5D={RECORD_ID}&submit=delete+selected"
+auth: 
+  cookiename: "dns_cookie"
