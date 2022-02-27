@@ -217,7 +217,7 @@ type Record struct {
 func (ctx *FreeDNS) GetRecords(domain_id string) (map[string]Record, error) {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + strings.Replace(ctx.Urls.GetRecords, "{DOMAIN_ID}", domain_id, -1))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
@@ -227,7 +227,7 @@ func (ctx *FreeDNS) GetRecords(domain_id string) (map[string]Record, error) {
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	li := doc.Find("li font").Text()
