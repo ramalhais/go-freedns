@@ -23,6 +23,7 @@ type ConfigUrls struct {
 	CreateDomain string `envconfig:"URLS_CREATE_DOMAIN"`
 	DeleteDomain string `envconfig:"URLS_DELETE_DOMAIN"`
 	GetRecords   string `envconfig:"URLS_GET_RECORDS"`
+	GetRecordDetails string `envconfig:"URLS_GET_RECORD_DETAILS"`
 	UpdateRecord string `envconfig:"URLS_UPDATE_RECORD"`
 	DeleteRecord string `envconfig:"URLS_DELETE_RECORD"`
 }
@@ -93,6 +94,7 @@ func NewFreeDNS() (*FreeDNS, error) {
 			CreateDomain: "/domain/domaincheck.php?domain={DOMAIN}",
 			DeleteDomain: "/domain/delete.php?domain_id={DOMAIN_ID}",
 			GetRecords:   "/subdomain/?limit={DOMAIN_ID}",
+			GetRecordDetails:   "/subdomain/edit.php?data_id={RECORD_ID}",
 			UpdateRecord: "/subdomain/save.php?step=2",
 			DeleteRecord: "/subdomain/delete2.php?data_id%5B%5D={RECORD_ID}&submit=delete+selected",
 		},
@@ -214,6 +216,57 @@ type Record struct {
 	Value string
 }
 
+type RecordDetails struct {
+	Id    string
+	Fqdn  string
+	Type  string
+	Host  string
+	DomainId string
+	Domain string
+	Value string
+	Ttl	  string
+	Wildcard string
+}
+
+func (ctx *FreeDNS) GetRecordDetails(record_id string) (*RecordDetails, error) {
+	record := RecordDetails{}
+
+	resp, err := ctx.Client.Get(ctx.Urls.Base + strings.Replace(ctx.Urls.GetRecordDetails, "{RECORD_ID}", record_id, -1))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		err = errors.New("HTTP error " + strconv.Itoa(resp.StatusCode) + ": " + resp.Status)
+		return nil, err
+	}
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	li := doc.Find("li font").Text()
+	if li != "" {
+		err = errors.New(li)
+	}
+
+	d := doc.Find("form table tr")
+	// log.Printf("d: %+v\n", d.Text())
+
+	record.Id = record_id
+	record.Fqdn = strings.Replace(d.Eq(0).Text(), "Editing ", "", -1)
+	record.Type = d.Eq(1).Find("td").Eq(1).Find("option[selected]").AttrOr("value", "")
+	record.Host = d.Eq(2).Find("td").Eq(1).Find("input").AttrOr("value", "")
+	record.DomainId = d.Eq(3).Find("td").Eq(1).Find("option[selected]").AttrOr("value", "")
+	record.Domain = strings.Split(d.Eq(3).Find("td").Eq(1).Find("option[selected]").Text(), " ")[0]
+	record.Value = d.Eq(4).Find("td").Eq(1).Find("input").AttrOr("value", "")
+	record.Ttl = d.Eq(5).Find("td").Eq(1).Find("input").AttrOr("value", "")
+	record.Wildcard = d.Eq(6).Find("td").Eq(1).Find("input.checked").AttrOr("value", "0")
+
+	return &record, nil
+}
+
 func (ctx *FreeDNS) GetRecords(domain_id string) (map[string]Record, error) {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + strings.Replace(ctx.Urls.GetRecords, "{DOMAIN_ID}", domain_id, -1))
 	if err != nil {
@@ -249,6 +302,10 @@ func (ctx *FreeDNS) GetRecords(domain_id string) (map[string]Record, error) {
 			t := a.Parent().Next().Text()
 			v := a.Parent().Next().Next().Text()
 
+			if strings.HasSuffix(v, "...") {
+				recordDetails, _ := ctx.GetRecordDetails(record_id)
+				v = recordDetails.Value
+			}
 			m[record_id] = Record{Id: record_id, Name: domain, Type: t, Value: v}
 		}
 	})

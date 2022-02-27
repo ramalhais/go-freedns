@@ -64,6 +64,15 @@ func main() {
 	records, _ = ctx.GetRecords(domains[domain])
 	log.Debugf("Records: %+v\n", records)
 
+	records, _ = ctx.GetRecords(domains[domain])
+	log.Debugf("Details records: %+v\n", records)
+	recordIds, _ = ctx.FindRecordIds(records, "xdns-demo2."+domain)
+	log.Debugf("Details recordIds: %+v\n", recordIds)
+	if len(recordIds)>0 {
+		details, _ := ctx.GetRecordDetails(recordIds[0])
+		log.Debugf("Details: %+v\n", details)
+	}
+
 	// Delete DNS domain
 	err = ctx.DeleteDomain(domains[domain])
 	domains, _, _ = ctx.GetDomains()
