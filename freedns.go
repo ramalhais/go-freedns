@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -123,18 +124,16 @@ func NewFreeDNS() (*FreeDNS, error) {
 func (ctx *FreeDNS) GetDomains() (map[string]string, map[string]string, error) {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + ctx.Urls.GetDomains)
 	if err != nil {
-		log.Printf("Error getting domains: %s", err.Error())
-		return nil, errors.New("Unable to get")
+		return nil, nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		log.Fatalf("failed to fetch data: %d %s", resp.StatusCode, resp.Status)
-		return nil, errors.New("HTTP error")
+		err = errors.New("HTTP error " + strconv.Itoa(resp.StatusCode) + ": " + resp.Status)
+		return nil, nil, err
 	}
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Fatal(err)
-		return nil, errors.New("Unable to query")
+		return nil, nil, err
 	}
 
 	li := doc.Find("li font").Text()
@@ -163,17 +162,17 @@ func (ctx *FreeDNS) GetDomains() (map[string]string, map[string]string, error) {
 func (ctx *FreeDNS) CreateDomain(domain string) error {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + strings.Replace(ctx.Urls.CreateDomain, "{DOMAIN}", domain, -1))
 	if err != nil {
-		log.Printf("Error creating domain %s: %s", domain, err.Error())
+		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		log.Fatalf("failed to fetch data for domain %s: %d %s", domain, resp.StatusCode, resp.Status)
+		err = errors.New("HTTP error " + strconv.Itoa(resp.StatusCode) + ": " + resp.Status)
+		return err
 	}
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Fatal(err)
-		return errors.New("Unable to query")
+		return err
 	}
 
 	li := doc.Find("li font").Text()
@@ -187,17 +186,17 @@ func (ctx *FreeDNS) CreateDomain(domain string) error {
 func (ctx *FreeDNS) DeleteDomain(domain_id string) error {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + strings.Replace(ctx.Urls.DeleteDomain, "{DOMAIN_ID}", domain_id, -1))
 	if err != nil {
-		log.Printf("Error deleting domain ID %s: %s", domain_id, err.Error())
+		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		log.Fatalf("failed to fetch data for domain ID %s: %d %s", domain_id, resp.StatusCode, resp.Status)
+		err = errors.New("HTTP error " + strconv.Itoa(resp.StatusCode) + ": " + resp.Status)
+		return err
 	}
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Fatal(err)
-		return errors.New("Unable to query")
+		return err
 	}
 
 	li := doc.Find("li font").Text()
@@ -218,17 +217,17 @@ type Record struct {
 func (ctx *FreeDNS) GetRecords(domain_id string) (map[string]Record, error) {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + strings.Replace(ctx.Urls.GetRecords, "{DOMAIN_ID}", domain_id, -1))
 	if err != nil {
-		log.Printf("Error getting records for domain %s: %s", domain_id, err.Error())
+		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		log.Fatalf("failed to fetch data records for domain_id %s: %d %s", domain_id, resp.StatusCode, resp.Status)
+		err = errors.New("HTTP error " + strconv.Itoa(resp.StatusCode) + ": " + resp.Status)
+		return nil, err
 	}
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Fatal(err)
-		return nil, errors.New("Unable to query")
+		return err
 	}
 
 	li := doc.Find("li font").Text()
@@ -270,18 +269,18 @@ func (ctx *FreeDNS) UpdateRecord(domain_id string, record_id string, name string
 	}
 	resp, err := ctx.Client.PostForm(ctx.Urls.Base+ctx.Urls.UpdateRecord, formData)
 	if err != nil {
-		log.Printf("Error creating record %s for dmain %s: %s", name, domain_id, err.Error())
+		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		log.Fatalf("failed to fetch data for domain ID %s record %s: %d %s", domain_id, name, resp.StatusCode, resp.Status)
+		err = errors.New("HTTP error " + strconv.Itoa(resp.StatusCode) + ": " + resp.Status)
+		return err
 	}
 	// b, _ := io.ReadAll(resp.Body)
 	// log.Printf("resp: %+v\n", string(b))
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Fatal(err)
 		return err
 	}
 
@@ -318,14 +317,14 @@ func (ctx *FreeDNS) DeleteRecord(record_id string) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return errors.New(string(resp.StatusCode) + ":" + resp.Status)
+		err = errors.New(strconv.Itoa(resp.StatusCode) + ":" + resp.Status)
+		return err
 	}
 	// b, _ := io.ReadAll(resp.Body)
 	// log.Printf("resp: %+v\n", string(b))
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Fatal(err)
 		return err
 	}
 
