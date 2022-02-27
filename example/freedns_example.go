@@ -32,7 +32,7 @@ func main() {
 	}
 
 	// Get all DNS domains in your account
-	domains, _ = ctx.GetDomains()
+	domains, _, _ = ctx.GetDomains()
 	log.Debugf("Domains: %+v\n", domains)
 
 	// Create DNS record
@@ -66,6 +66,6 @@ func main() {
 
 	// Delete DNS domain
 	err = ctx.DeleteDomain(domains[domain])
-	domains, _ = ctx.GetDomains()
+	domains, _, _ = ctx.GetDomains()
 	log.Debugf("Domains: %+v\n", domains)
 }

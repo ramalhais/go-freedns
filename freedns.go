@@ -120,7 +120,7 @@ func NewFreeDNS() (*FreeDNS, error) {
 	return ctx, err
 }
 
-func (ctx *FreeDNS) GetDomains() (map[string]string, error) {
+func (ctx *FreeDNS) GetDomains() (map[string]string, map[string]string, error) {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + ctx.Urls.GetDomains)
 	if err != nil {
 		log.Printf("Error getting domains: %s", err.Error())
@@ -142,7 +142,8 @@ func (ctx *FreeDNS) GetDomains() (map[string]string, error) {
 		err = errors.New(li)
 	}
 
-	m := map[string]string{}
+	mid := map[string]string{}
+	mname := map[string]string{}
 	d := doc.Find("table").Eq(5)
 	d.Find("tr td font").Each(func(i int, s *goquery.Selection) {
 		b := s.Find("b")
@@ -150,13 +151,13 @@ func (ctx *FreeDNS) GetDomains() (map[string]string, error) {
 		if strings.Contains(domain, ".") {
 			href, _ := b.Parent().Parent().Find("a").Eq(0).Attr("href")
 			domain_id := strings.Split(href, "=")[1]
-			m[domain] = domain_id
-			m[domain_id] = domain
+			mname[domain] = domain_id
+			mid[domain_id] = domain
 		}
 	})
 	//	b, _ := io.ReadAll(resp.Body)
 
-	return m, err
+	return mname, mid, err
 }
 
 func (ctx *FreeDNS) CreateDomain(domain string) error {
