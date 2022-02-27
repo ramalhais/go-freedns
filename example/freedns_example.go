@@ -21,7 +21,7 @@ func main() {
 	log.Debugf("Context: %+v\n", ctx)
 
 	// Get all DNS domains in your account
-	domains, _ := ctx.GetDomains()
+	domains, _, _ := ctx.GetDomains()
 	log.Debugf("Domains: %+v\n", domains)
 
 	// Create DNS domain
