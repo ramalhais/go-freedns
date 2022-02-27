@@ -2,12 +2,14 @@ package main
 
 import (
 	freedns "github.com/ramalhais/go-freedns"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
 	var err error
 
+	log := logrus.New()
+	log.Level = logrus.DebugLevel
 	log.Info("Testing go-freedns.")
 	log.Info("Usage:")
 	log.Infof("\tAUTH_LOGIN=you@example.com AUTH_PASSWORD=secret go run freedns_test.go\n")
@@ -18,35 +20,51 @@ func main() {
 	}
 	log.Debugf("Context: %+v\n", ctx)
 
+	// Get all DNS domains in your account
 	domains, _ := ctx.GetDomains()
 	log.Debugf("Domains: %+v\n", domains)
 
-	domain := "kube.ml"
+	// Create DNS domain
+	domain := "domain.example"
 	err = ctx.CreateDomain(domain)
 	if err != nil {
-		log.Errorf("Unable to create domain %s: %s\n", domain, err.Error())
+		log.Infof("Unable to create domain %s: %s\n", domain, err.Error())
 	}
 
+	// Get all DNS domains in your account
 	domains, _ = ctx.GetDomains()
 	log.Debugf("Domains: %+v\n", domains)
 
+	// Create DNS record
 	recordName := "xpto"
 	err = ctx.CreateRecord(domains[domain], recordName, "A", "8.8.8.8", "300")
 	if err != nil {
 		log.Errorf("Unable to create record %s on domain %s: %s\n", recordName, domain, err.Error())
 	}
 
+	// Get all DNS records for domain
 	records, _ := ctx.GetRecords(domains[domain])
-	mlRecordIds, _ := ctx.FindRecordIds(records, recordName+domain)
-	log.Debugf("mlRecordIds: %+v\n", mlRecordIds)
-	err = ctx.UpdateRecord(domains[domain], mlRecordIds[0], recordName, "A", "8.8.8.8", "300")
+	// Find DNS record by FQDN in retrieved records
+	recordIds, _ := ctx.FindRecordIds(records, recordName+"."+domain)
+	log.Debugf("recordIds: %+v\n", recordIds)
+	// Update first DNS record found
+	err = ctx.UpdateRecord(domains[domain], recordIds[0], recordName, "A", "8.8.8.8", "300")
 	if err != nil {
 		log.Errorf("Unable to update record: %s\n", err.Error())
 	}
 
+	// Get all DNS records for domain
 	records, _ = ctx.GetRecords(domains[domain])
 	log.Debugf("Records: %+v\n", records)
 
+	// Delete first DNS record found
+	err = ctx.DeleteRecord(recordIds[0])
+
+	// Get all DNS records for domain
+	records, _ = ctx.GetRecords(domains[domain])
+	log.Debugf("Records: %+v\n", records)
+
+	// Delete DNS domain
 	err = ctx.DeleteDomain(domains[domain])
 	domains, _ = ctx.GetDomains()
 	log.Debugf("Domains: %+v\n", domains)

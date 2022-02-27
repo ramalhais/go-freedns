@@ -2,7 +2,6 @@ package freedns
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -104,11 +103,11 @@ func NewFreeDNS() (*FreeDNS, error) {
 	var err error
 	err = ctx.ConfigFile()
 	if err != nil {
-		fmt.Printf("ConfigFile: %s\n", err)
+		log.Printf("ConfigFile: %s\n", err)
 	}
 	err = ctx.ConfigEnv()
 	if err != nil {
-		fmt.Printf("Error: ConfigEnv: %s", err)
+		log.Printf("Error: ConfigEnv: %s", err)
 	}
 
 	jar, _ := cookiejar.New(nil)
@@ -124,7 +123,7 @@ func NewFreeDNS() (*FreeDNS, error) {
 func (ctx *FreeDNS) GetDomains() (map[string]string, error) {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + ctx.Urls.GetDomains)
 	if err != nil {
-		fmt.Printf("Error getting domains: %s", err.Error())
+		log.Printf("Error getting domains: %s", err.Error())
 		return nil, errors.New("Unable to get")
 	}
 	defer resp.Body.Close()
@@ -163,7 +162,7 @@ func (ctx *FreeDNS) GetDomains() (map[string]string, error) {
 func (ctx *FreeDNS) CreateDomain(domain string) error {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + strings.Replace(ctx.Urls.CreateDomain, "{DOMAIN}", domain, -1))
 	if err != nil {
-		fmt.Printf("Error creating domain %s: %s", domain, err.Error())
+		log.Printf("Error creating domain %s: %s", domain, err.Error())
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
@@ -187,7 +186,7 @@ func (ctx *FreeDNS) CreateDomain(domain string) error {
 func (ctx *FreeDNS) DeleteDomain(domain_id string) error {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + strings.Replace(ctx.Urls.DeleteDomain, "{DOMAIN_ID}", domain_id, -1))
 	if err != nil {
-		fmt.Printf("Error deleting domain ID %s: %s", domain_id, err.Error())
+		log.Printf("Error deleting domain ID %s: %s", domain_id, err.Error())
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
@@ -218,7 +217,7 @@ type Record struct {
 func (ctx *FreeDNS) GetRecords(domain_id string) (map[string]Record, error) {
 	resp, err := ctx.Client.Get(ctx.Urls.Base + strings.Replace(ctx.Urls.GetRecords, "{DOMAIN_ID}", domain_id, -1))
 	if err != nil {
-		fmt.Printf("Error getting records for domain %s: %s", domain_id, err.Error())
+		log.Printf("Error getting records for domain %s: %s", domain_id, err.Error())
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
@@ -238,7 +237,7 @@ func (ctx *FreeDNS) GetRecords(domain_id string) (map[string]Record, error) {
 
 	m := map[string]Record{}
 	d := doc.Find("form table tr")
-	// fmt.Printf("d: %+v\n", d.Text())
+	// log.Printf("d: %+v\n", d.Text())
 
 	d.Each(func(i int, s *goquery.Selection) {
 		a := s.Find("td a")
@@ -270,14 +269,14 @@ func (ctx *FreeDNS) UpdateRecord(domain_id string, record_id string, name string
 	}
 	resp, err := ctx.Client.PostForm(ctx.Urls.Base+ctx.Urls.UpdateRecord, formData)
 	if err != nil {
-		fmt.Printf("Error creating record %s for dmain %s: %s", name, domain_id, err.Error())
+		log.Printf("Error creating record %s for dmain %s: %s", name, domain_id, err.Error())
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		log.Fatalf("failed to fetch data for domain ID %s record %s: %d %s", domain_id, name, resp.StatusCode, resp.Status)
 	}
 	// b, _ := io.ReadAll(resp.Body)
-	// fmt.Printf("resp: %+v\n", string(b))
+	// log.Printf("resp: %+v\n", string(b))
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
@@ -321,7 +320,7 @@ func (ctx *FreeDNS) DeleteRecord(record_id string) error {
 		return errors.New(string(resp.StatusCode) + ":" + resp.Status)
 	}
 	// b, _ := io.ReadAll(resp.Body)
-	// fmt.Printf("resp: %+v\n", string(b))
+	// log.Printf("resp: %+v\n", string(b))
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
