@@ -67,13 +67,23 @@ func (ctx *FreeDNS) ConfigEnv() error {
 }
 
 func (ctx *FreeDNS) Authenticate() (string, error) {
-	if ctx.Auth.Login == "" || ctx.Auth.Password == "" {
+	if ctx.Auth.CookieValue == "" && (ctx.Auth.Login == "" || ctx.Auth.Password == "") {
 		return "", errors.New("Auth not found in configuration")
 	}
 	formData := url.Values{
 		"username": []string{ctx.Auth.Login},
 		"password": []string{ctx.Auth.Password},
 		"action":   []string{"auth"},
+	}
+
+	if ctx.Auth.CookieValue != "" {
+		cookie := &http.Cookie{
+			Name:   ctx.Auth.CookieName,
+			Value:  ctx.Auth.CookieValue,
+			// MaxAge: 300,
+		}
+		url, _ := url.Parse(ctx.Urls.Base+ctx.Urls.Login)
+		ctx.Client.Jar.SetCookies(url, []*http.Cookie{cookie})
 	}
 	resp, err := ctx.Client.PostForm(ctx.Urls.Base+ctx.Urls.Login, formData)
 	if err != nil {

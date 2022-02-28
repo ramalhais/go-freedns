@@ -13,6 +13,8 @@ func main() {
 	log.Info("Testing go-freedns.")
 	log.Info("Usage:")
 	log.Infof("\tAUTH_LOGIN=you@example.com AUTH_PASSWORD=secret go run freedns_test.go\n")
+	log.Info("or")
+	log.Infof("\tAUTH_COOKIE_VALUE=VALUE_OF_COOKIE_NAMED_dns_cookie go run freedns_test.go\n")
 
 	ctx, err := freedns.NewFreeDNS()
 	if err != nil {
