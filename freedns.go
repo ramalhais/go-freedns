@@ -155,7 +155,7 @@ func (ctx *FreeDNS) GetDomains() (map[string]string, map[string]string, error) {
 
 	mid := map[string]string{}
 	mname := map[string]string{}
-	d := doc.Find("table").Eq(5)
+	d := doc.Find("table").Eq(6)
 	d.Find("tr td font").Each(func(i int, s *goquery.Selection) {
 		b := s.Find("b")
 		domain := b.Text()
