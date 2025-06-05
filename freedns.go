@@ -14,6 +14,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/yaml.v3"
+	// "io"
 )
 
 type ConfigUrls struct {
@@ -143,6 +144,7 @@ func (ctx *FreeDNS) GetDomains() (map[string]string, map[string]string, error) {
 		err = errors.New("HTTP error " + strconv.Itoa(resp.StatusCode) + ": " + resp.Status)
 		return nil, nil, err
 	}
+
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		return nil, nil, err
@@ -155,7 +157,7 @@ func (ctx *FreeDNS) GetDomains() (map[string]string, map[string]string, error) {
 
 	mid := map[string]string{}
 	mname := map[string]string{}
-	d := doc.Find("table").Eq(6)
+	d := doc.Find("table").Eq(5)
 	d.Find("tr td font").Each(func(i int, s *goquery.Selection) {
 		b := s.Find("b")
 		domain := b.Text()
